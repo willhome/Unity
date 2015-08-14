@@ -1,4 +1,4 @@
-﻿Shader "BRSGraphics/PBR_Outline" 
+﻿Shader "Graphics/PBR_Outline" 
 {
 	Properties 
 	{
@@ -8,20 +8,20 @@
 		_Glossiness ("Smoothness", Range(0,1)) = 0.5
 		_Metallic ("Metallic", Range(0,1)) = 0.0
 		
-		// Used in OutlineTangentPush pass
 		_OutlineColor ("Outline Color", Color) = (1,1,1,1)
 		_OutlineThickness ("Outline Thickness", Range(0, 1)) = 0.0 
 	}
 	
 	SubShader 
 	{
-		Tags { "RenderType"="Opaque" }
+		Tags { "RenderType"="Opaque+1" }
 		LOD 200
 			
 		Pass
-		{
+		{ 
 			Name "OUTLINE"
 			Cull Front
+			ZTest Always
 			
 			CGPROGRAM
 			#pragma vertex vert
@@ -46,7 +46,11 @@
 			{
 				V2F o;
 					
-				half4 position = half4(i.vertex + i.normal * _OutlineThickness, 1.0);
+				// Unity5 Does not guarantee normals and tangents to be normalized.
+				// http://docs.unity3d.com/Manual/UpgradeGuide5-Shaders.html
+				half3 normal = normalize(i.normal);
+					
+				half4 position = half4(i.vertex + normal * _OutlineThickness, 1.0);
 				o.normal = i.normal;
 				o.vertex = mul(UNITY_MATRIX_MVP, position);
 				return o;
@@ -60,6 +64,9 @@
 			ENDCG
 		}
 		
+		
+		ZTest Always
+		
 		CGPROGRAM
 		// Physically based Standard lighting model, and enable shadows on all light types
 		#pragma surface surf Standard fullforwardshadows
@@ -67,6 +74,7 @@
 		// Use shader model 3.0 target, to get nicer looking lighting
 		#pragma target 3.0
 
+		
 		sampler2D _MainTex;
 		sampler2D _NormalMap;
 
